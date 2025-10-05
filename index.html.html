@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET Study Hub - Notes Uploader</title>
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for a science-y font and colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-dark': '#0d1321', // Deep space blue
+                        'secondary-glow': '#4ade80', // Emerald green for highlights
+                        'accent-cyan': '#22d3ee', // Cyan for biology
+                        'accent-purple': '#a78bfa', // Purple for chemistry
+                        'accent-orange': '#fb923c', // Orange for physics
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for the bubble effect */
+        .bubble {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            @apply shadow-xl hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98]
+        }
+        /* Custom background to resemble a galaxy or molecular structure */
+        body {
+            background-color: #0d1321;
+            background-image: radial-gradient(circle at 10% 20%, #0f172a 0%, #0d1321 80%);
+            min-height: 100vh;
+        }
+        /* Style for the back button */
+        #back-button {
+            transition: opacity 0.3s ease;
+        }
+        /* Style for Chapter links */
+        .chapter-link {
+            transition: background-color 0.2s;
+        }
+    </style>
+    <!-- Load Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="font-sans text-white p-4 sm:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-secondary-glow tracking-tight shadow-text-lg">
+                NEET Notes Repository
+            </h1>
+            <p id="subtitle" class="text-lg mt-2 text-slate-300">Select a subject to begin your study journey.</p>
+        </header>
+
+        <!-- Back Button -->
+        <button id="back-button" onclick="navigateBack()"
+            class="bg-slate-700/50 text-slate-300 py-2 px-4 rounded-lg text-sm mb-6 flex items-center hover:bg-slate-700 transition duration-200 opacity-0 pointer-events-none">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back
+        </button>
+
+        <!-- Main Content Area (Dynamic Content Renders Here) -->
+        <div id="content-area" class="flex flex-wrap justify-center gap-6">
+            <!-- Content will be rendered by JavaScript -->
+        </div>
+
+        <!-- Dynamic Message Box (For "Coming Soon" or Errors) -->
+        <div id="message-box" class="mt-12 text-center hidden">
+            <div class="inline-block bg-slate-800/70 p-6 rounded-xl border border-slate-700">
+                <p id="message-text" class="text-xl font-semibold text-slate-400">Loading...</p>
+                <p id="message-detail" class="text-slate-500 mt-2 text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Data Structure for Notes ---
+        const notesData = {
+            'Biology': {
+                color: 'accent-cyan',
+                branches: {
+                    'Botany': {
+                        chapters: [
+                            { name: 'Chapter 1: Plant Kingdom', file: 'notes/bio/botany/plant_kingdom.pdf' },
+                            { name: 'Chapter 2: Morphology of Flowering Plants', file: 'notes/bio/botany/morphology.pdf' },
+                            { name: 'Chapter 3: Photosynthesis in Higher Plants', file: 'notes/bio/botany/photosynthesis.pdf' }
+                        ]
+                    },
+                    'Zoology': {
+                        chapters: [
+                            { name: 'Chapter 1: Human Physiology', file: 'notes/bio/zoology/human_physiology.pdf' },
+                            { name: 'Chapter 2: Structural Organisation in Animals', file: 'notes/bio/zoology/structural_org.pdf' },
+                            { name: 'Chapter 3: Biomolecules', file: 'notes/bio/zoology/biomolecules.pdf' }
+                        ]
+                    }
+                }
+            },
+            'Physics': {
+                color: 'accent-orange',
+                isComingSoon: true
+            },
+            'Chemistry': {
+                color: 'accent-purple',
+                isComingSoon: true
+            }
+        };
+
+        // --- 2. State Management ---
+        let history = [{ state: 'subjects' }];
+        let currentState = history[history.length - 1];
+        const contentArea = document.getElementById('content-area');
+        const subtitle = document.getElementById('subtitle');
+        const backButton = document.getElementById('back-button');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // --- 3. Navigation Logic ---
+
+        function updateState(newState) {
+            history.push(newState);
+            currentState = newState;
+            renderApp();
+        }
+
+        function navigateBack() {
+            if (history.length > 1) {
+                history.pop();
+                currentState = history[history.length - 1];
+                renderApp();
+            }
+        }
+
+        function toggleBackButton() {
+            if (history.length > 1) {
+                backButton.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                backButton.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function showMessage(text, detail = '') {
+            contentArea.innerHTML = '';
+            messageText.textContent = text;
+            messageDetail.textContent = detail;
+            messageBox.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // --- 4. Rendering Functions ---
+
+        function renderSubjects() {
+            hideMessage();
+            subtitle.textContent = "Select a subject to begin your study journey.";
+            contentArea.className = 'flex flex-wrap justify-center gap-6'; // Reset layout for bubbles
+            contentArea.innerHTML = Object.keys(notesData).map(subjectName => {
+                const subject = notesData[subjectName];
+                // Icon SVGs (using simple initials as placeholders for simplicity)
+                let iconText = subjectName.substring(0, 1);
+                
+                return `
+                    <div onclick="handleClick('${subjectName}')" 
+                         class="bubble w-40 h-40 sm:w-52 sm:h-52 bg-primary-dark rounded-full flex flex-col items-center justify-center p-4 m-2 text-center 
+                                border-4 border-${subject.color}/50 text-${subject.color} 
+                                shadow-lg shadow-${subject.color}/30">
+                        <span class="text-5xl sm:text-6xl font-extrabold">${iconText}</span>
+                        <p class="mt-2 text-xl font-semibold">${subjectName}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBranches(subjectName) {
+            hideMessage();
+            const subject = notesData[subjectName];
+            if (subject.isComingSoon) {
+                showMessage(`The ${subjectName} section is coming soon!`, "We are compiling the best notes for you. Check back later!");
+                return;
+            }
+
+            subtitle.textContent = `Exploring ${subjectName}: Choose a branch.`;
+            contentArea.className = 'flex flex-wrap justify-center gap-6'; // Reset layout for bubbles
+            
+            const branchHTML = Object.keys(subject.branches).map(branchName => {
+                // Using the subject's color for the branch bubbles
+                const color = subject.color; 
+                return `
+                    <div onclick="handleClick('${subjectName}', '${branchName}')" 
+                         class="bubble w-40 h-40 sm:w-48 sm:h-48 bg-primary-dark rounded-full flex flex-col items-center justify-center p-4 m-2 text-center 
+                                border-4 border-${color}/40 text-${color} 
+                                shadow-md shadow-${color}/20">
+                        <p class="text-3xl font-extrabold">${branchName}</p>
+                    </div>
+                `;
+            }).join('');
+
+            contentArea.innerHTML = branchHTML;
+        }
+
+        function renderChapters(subjectName, branchName) {
+            hideMessage();
+            const branch = notesData[subjectName].branches[branchName];
+            if (!branch || !branch.chapters.length) {
+                showMessage(`No chapters found for ${branchName}.`);
+                return;
+            }
+
+            subtitle.textContent = `${subjectName} / ${branchName}: Select a Chapter to Download Notes.`;
+            contentArea.className = 'grid grid-cols-1 md:grid-cols-2 gap-4'; // Change layout for list view
+
+            const chapterHTML = branch.chapters.map(chapter => {
+                // IMPORTANT: The 'href' points to the relative path where your PDF must be uploaded.
+                // The target="_blank" opens the PDF in a new tab.
+                return `
+                    <a href="./${chapter.file}" target="_blank" rel="noopener noreferrer"
+                       class="chapter-link bg-slate-800/70 p-5 rounded-xl border border-slate-700 flex justify-between items-center 
+                              hover:bg-slate-700/80 transition duration-200">
+                        <span class="text-lg font-medium text-slate-200">${chapter.name}</span>
+                        <span class="text-sm text-secondary-glow font-bold flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            VIEW/DOWNLOAD
+                        </span>
+                    </a>
+                `;
+            }).join('');
+
+            contentArea.innerHTML = chapterHTML;
+        }
+
+        // --- 5. Event Handler (Main click logic) ---
+
+        function handleClick(subject, branch = null) {
+            if (branch) {
+                // State: Chapters
+                updateState({ state: 'chapters', subject: subject, branch: branch });
+            } else {
+                // State: Branches (or Coming Soon)
+                if (notesData[subject].isComingSoon) {
+                    // Update state briefly just to show the back button
+                    updateState({ state: 'coming_soon', subject: subject });
+                } else {
+                    updateState({ state: 'branches', subject: subject });
+                }
+            }
+        }
+
+        // --- 6. Main Application Renderer ---
+
+        function renderApp() {
+            toggleBackButton();
+            
+            switch (currentState.state) {
+                case 'subjects':
+                    renderSubjects();
+                    break;
+                case 'branches':
+                    renderBranches(currentState.subject);
+                    break;
+                case 'chapters':
+                    renderChapters(currentState.subject, currentState.branch);
+                    break;
+                case 'coming_soon':
+                    // If we navigate back to 'subjects', the coming soon message will be handled by renderBranches
+                    renderBranches(currentState.subject);
+                    break;
+                default:
+                    renderSubjects();
+            }
+        }
+
+        // Initialize the app on page load
+        document.addEventListener('DOMContentLoaded', renderApp);
+
+    </script>
+</body>
+</html>
